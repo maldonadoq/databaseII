@@ -44,8 +44,6 @@ public:
 	void load_table();
 	void save_table();
 	void show_table();
-	void load_a();
-	void save_a();
 	void random(string);
 	table* find_(string);
 	~db(){		};
@@ -143,28 +141,6 @@ void db::save_table(){
 	fclose(this->nts);
 }
 
-void db::load_a(){
-	load_table();
-	if(this->table_name.size()!=0){
-		for(unsigned i=0; i<this->table_name.size(); i++){
-			for(unsigned j=0; j<this->table_name[i].tb1.size(); j++){
-				this->table_name[i].tb1[j]->resize(this->table_name[i].st);
-				this->table_name[i].tb1[j]->load();
-			}
-		}
-	}
-}
-
-void db::save_a(){
-	for(unsigned i=0; i<this->table_name.size(); i++){
-		this->table_name[i].refresh();
-		for(unsigned j=0; j<this->table_name[i].tb1.size(); j++){
-			this->table_name[i].tb1[j]->save();
-		}	
-	}
-	save_table();
-}
-
 table* db::find_(string a){
 	for(unsigned i=0; i<this->table_name.size(); i++)
 		if(this->table_name[i].name == a)	return &table_name[i];
@@ -241,8 +217,6 @@ void db::insert_into(string a){
 			}
 			for(j=0; j<tbm->c.size(); j++){
 				if(tbm->c[j].ins == false){
-					if(tbm->c[bpos[j]].idx)
-						tbm->c[bpos[j]].ix->insert(stoi("0"), tbm->tb1[bpos[j]]->size());
 					tbm->tb1[j]->set("0");
 				}
 			}
@@ -299,18 +273,14 @@ void db::select_from(string a){
 			cout << tbm->c[i].name << "\t";
 		cout << endl;
 
-		unsigned nr=0;
-		for(unsigned i=0; i<tbm->tb1[k]->size(); i++){
-			if(tbm->vd[i]==true and tbm->tb1[k]->opr(tbm->tb1[k]->get(i),par.second,op)){
-				tbm->rows_data(i);
-				nr++;
-			}
-		}
+		vector<unsigned> np = tbm->tb1[k]->scan(par.second, tbm->vd, op);
+		for(unsigned w=0; w<np.size(); w++)
+			tbm->rows_data(np[w]);
 
 		gettimeofday(&tf, NULL);
 	    tiempo = (tf.tv_sec - ti.tv_sec)*1000 + (tf.tv_usec - ti.tv_usec)/1000;
 	    printf("\n     >time table-scan: %.8lf s\n",tiempo/1000);
-	    cout << "     >rows: " << nr << endl;
+	    cout << "     >rows: " << np.size() << endl;
 	}
 	else	cout << "      error!! doesn't exist this table" << endl;
 }
@@ -444,8 +414,8 @@ void db::delete_from(string a){
 	nam = partial_partition(a,i,' ');
 	fr = partial_partition(a,l,a[a.size()-2]);
 	tbm = this->find_(nam);
-	if(nam == fr and tbm != NULL)	tbm->clear();
-	else if(tbm != NULL){
+	
+	if(tbm != NULL){
 		if(sw != partial_partition(a,i,' ')){
 			cout << "      error!! query like this! \"delete from table_name where col_name = id;\"" << endl;
 			return;
@@ -464,8 +434,6 @@ void db::delete_from(string a){
 
 		for(unsigned i=0; i<tbm->tb1[k]->size(); i++){
 			if(tbm->vd[i]==true and tbm->tb1[k]->opr(tbm->tb1[k]->get(i),par.second,op)){
-				//tbm->rows_erase(i);
-				//i--;
 				tbm->vd[i] = false;
 			}
 		}

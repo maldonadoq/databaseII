@@ -1,4 +1,12 @@
-create table estudianteIII(id integer, name varchar, lastname varchar, age age);
-Sat Nov  4 07:10:51 2017 
-1000
+create table estudiante_x(id integer, money double, age age);
+Tue Nov 14 10:56:02 2017 
+10000001
+
+create table estudiante_xx(id integer, money double, age age);
+Tue Nov 14 11:09:43 2017 
+50000001
+
+create table test(id integer, money double, age age, fecha date);
+Tue Nov 14 18:09:27 2017 
+100000002
 

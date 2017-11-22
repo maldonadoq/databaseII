@@ -11,8 +11,8 @@ bool console(string q, db *a){
 	string tm1 = partial_partition(q,i,' ');
 	string tm2 = partial_partition(q,j,';');
 
-	if(tm2 == "q" or tm2 == "exit"){	a->save_a();	return false;	}
-	else if(tm2 == "save")	a->save_a();
+	if(tm2 == "q" or tm2 == "exit"){	a->save_table();	return false;	}
+	else if(tm2 == "save")	a->save_table();
 	else if(tm2 == "info")	a->show_table();
 	else if(tm1 == "random")	a->random(q);
 	else if(tm1 == "create")	a->create_table(q);
@@ -23,13 +23,12 @@ bool console(string q, db *a){
 	else if(tm1 == "delete")	a->delete_from(q);
 	else if(tm1 == "update")	a->update_where(q);
 	else if(tm1 == "drop")	a->drop_table(q);
-	//a->save_a();
 	return true;
 }
 
 int main(int argc, char const *argv[]){
 	db *a = new db();
-	a->load_a();
+	a->load_table();
 
 	bool t = true;
 	string str;

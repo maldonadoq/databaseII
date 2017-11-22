@@ -44,12 +44,12 @@ public:
 		for(unsigned i=0; i<this->c.size(); i++){
 			nm = "table/" + this->name + "_" + c[i].name + ".bin";
 			sw = this->c[i].type;
-			if(sw == "integer")	this->tb1.push_back(new Intege(nm));
-			else if(sw == "boolean")	this->tb1.push_back(new Boolea(nm));
-			else if(sw == "double")	this->tb1.push_back(new Double(nm));
-			else if(sw == "varchar") this->tb1.push_back(new String(nm));
-			else if(sw == "date") this->tb1.push_back(new Date(nm));
-			else if(sw == "age") this->tb1.push_back(new Age(nm));
+			if(sw == "integer")	this->tb1.push_back(new Intege(nm,this->st));
+			else if(sw == "boolean")	this->tb1.push_back(new Boolea(nm,this->st));
+			else if(sw == "double")	this->tb1.push_back(new Double(nm,this->st));
+			else if(sw == "date") this->tb1.push_back(new Date(nm,this->st));
+			else if(sw == "age") this->tb1.push_back(new Age(nm,this->st));
+			//else if(sw == "varchar") this->tb1.push_back(new String(nm));
 		}
 	}
 
@@ -66,7 +66,7 @@ public:
 			out << c.c[i].name << "\t";
 		out << endl;
 
-		for(unsigned i=0; i<c.tb1[0]->size(); i++){
+		for(unsigned i=0; i<c.tb1[0]->size()-1; i++){
 			if(c.vd[i]==true){
 				cout << "    ";
 				for(unsigned j=0; j<c.tb1.size(); j++)
@@ -96,27 +96,10 @@ public:
    		cout << endl;
    	}
 
-   	void rows_erase(unsigned i){
-   		for(unsigned j=0; j<this->tb1.size(); j++)
-   			this->tb1[j]->erase(i);
-   	}
-
-   	void clear(){
-   		this->vd.clear();
-   		for(unsigned j=0; j<this->tb1.size(); j++)
-   			this->tb1[j]->clear();
-   	}
-   	
    	void random(unsigned n){
    		for(unsigned i=0; i<n; i++)	this->vd.push_back(true);
    		for(unsigned j=0; j<this->tb1.size(); j++)
    			this->tb1[j]->random(n);
-   	}
-
-   	void refresh(){
-   		for(unsigned j=0; j<this->tb1.size(); j++)
-   			this->tb1[j]->refresh(this->vd);
-   		this->vd = vector<bool>(this->tb1[0]->size(),true);
    	}
 };
 
