@@ -4,12 +4,15 @@
 #include "col.h"
 #include "../../../Algoritmos/aed/src/cmp.h"
 #include "redblack.h"
+#include <vector>
+#include <fstream>
+
 using namespace std;
 
 class cold{
 public:
 	int nc;
-	string name, type;
+	string name, type, name_idx;;
 	bool idx, ins;
 	rbtree<int,cmg<int>> *ix;
 	cold(int _c, string _name, string _type, bool _idx){
@@ -23,6 +26,28 @@ public:
 	friend ostream& operator<< (ostream & out, const cold &c){
 		out << "[" << c.nc << "|" << c.name << "|" << c.type << "|" << c.idx << "]  ";
 		return out;
+   	}
+
+   	void set_name(string _name){
+   		this->idx = true;
+   		this->name_idx = _name;
+   	}
+
+   	void set_idx(string tname){
+   		if(!this->idx){
+   			this->idx = true;
+	   		this->name_idx = "index/"+tname+"_"+this->name+".bin";
+
+	   		ofstream file(this->name_idx, ios::out | ios::binary);		
+			file.seekp(0);
+			vector<int> v(1000,-1);
+			for(unsigned i=0; i<2; i++){
+				file.write(reinterpret_cast<const char*>(&v[0]), v.size()*sizeof(int));
+			}
+
+			file.close();
+		}
+		else	cout << "      error! index in column " << this->name << " exist!" << endl;
    	}
 };
 
@@ -41,8 +66,9 @@ public:
 		this->query = _query;
 		this->vd = vector<bool>(this->st,true);
 		string sw, nm;
+
 		for(unsigned i=0; i<this->c.size(); i++){
-			nm = "table/" + this->name + "_" + c[i].name + ".bin";
+			nm = "table/" + this->name + "_" + c[i].name + ".bin";			
 			sw = this->c[i].type;
 			if(sw == "integer")	this->tb1.push_back(new Intege(nm,this->st));
 			else if(sw == "boolean")	this->tb1.push_back(new Boolea(nm,this->st));
@@ -114,7 +140,6 @@ public:
 };
 
 #endif
-
 
 //CREATE USER 'maldonado'@'localhost' IDENTIFIED WITH mysql_native_password AS '***';GRANT ALL PRIVILEGES ON *.* TO 'maldonado'@'localhost' REQUIRE SSL WITH GRANT OPTION MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0;
 //>time scan: 31.54000000 s
