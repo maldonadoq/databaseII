@@ -1,20 +1,13 @@
-#include <ctime>
-#include <iomanip>
 #include <iostream>
-#include <sstream>
+#include "src/arbol_d.h"
 
 using namespace std;
 
-time_t getEpochTime(const wstring& dateTime){
-       static const wstring dateTimeFormat{ L"%Y-%m-%dT%H:%M:%SZ" };
-       wistringstream ss{ dateTime };   tm dt;
-       ss >> get_time(&dt, dateTimeFormat.c_str());
-       return mktime(&dt);
-}
+int main(int argc, char const *argv[]){
 
-int main(void){
-    wstring dateTimeStr{ L"2017-09-23T19:42:42Z" };
-    cout << getEpochTime(dateTimeStr) << std::endl;
-
-       return 0;
+	arbol_d<int> *a = new arbol_d<int>("est");
+	a->insertar_orden(7,0);
+	a->impresion_lineal();
+	delete a;
+	return 0;
 }
