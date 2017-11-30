@@ -26,10 +26,14 @@ using namespace std;
 class db{
 private:
 	FILE *nt, *nts;			  // tables
+	string Nload_table, Nload_index;
 public:
 	vector<table> table_name;	//numero de tablas
 	vector<string> vcr;
-	db(){	};
+	db(){
+		this->Nload_table = "nt.sql";
+		this->Nload_index = "idx.sql";
+	};
 
 	vector<cold> create(vector<pair<string,string>>);
 	res * partition(string);
@@ -75,43 +79,30 @@ res * db::partition(string wr){
 
 // read .sql to create tables!
 void db::load_table(){
-	this->nt = fopen("nt.sql","r");
-	char c;
-	int i=0, j=0;
-	unsigned size;
-	string t="";
-	string nam = "", crtb = "", dat="", tm="";
+	string nam, crtb, dat, stmp;
 	res *tmp;
-	while((c=getc(this->nt))!=EOF){
-		if(j==0 and c!='\n')	t+=c;
-		else if(j==1 and c!='\n')	t+=c;
-		else if(c=='\n'){
-			if(i==0){
-				j++;
-				crtb = t;
-				t = "";
-				i++;
-			}
-			else if(i==1){
-				dat = t;
-				t = "";
-				i++;
-			}
-			else if(i==2){
-				size = stoi(t);
-				tmp = partition(crtb);   							//pair <name, tpe>
-				if(tmp!=NULL)
-					table_name.push_back(table(crtb,tmp->name,create(tmp->ve),dat,size)); 	//create table
-				i++;
-			}
-			else if(i==3){
-				t="";
-				j=0;
-				i=0;
-			}
-		}
+	vector<string> vtmp;
+
+	ifstream tfile(this->Nload_table);
+	getline(tfile, stmp);	
+	if(stmp.size() != 0)	stmp.resize(stmp.size()-1);
+	split(vtmp,stmp,is_any_of("|"));
+	
+	for(unsigned i=0; vtmp.size()>=3 and i<vtmp.size(); i+=3){
+		tmp = partition(vtmp[i]);   //pair <name, tpe>
+		if(tmp!=NULL)
+			table_name.push_back(table(vtmp[i],tmp->name,create(tmp->ve),vtmp[i+1],stoi(vtmp[i+2]))); 	//create table
 	}
-	fclose(this->nt);
+
+
+	ifstream ifile(this->Nload_index);
+	getline(ifile, stmp);	
+	if(stmp.size() != 0)	stmp.resize(stmp.size()-1);
+	split(vtmp,stmp,is_any_of("|"));
+
+	for(unsigned i=0; vtmp.size()>=3 and i<vtmp.size(); i+=3){
+		this->table_name[stoi(vtmp[i])].c[stoi(vtmp[i+1])].set_name(vtmp[i+2]);
+	}
 }
 
 void db::show_table(){
@@ -131,14 +122,21 @@ vector<cold> db::create(vector<pair<string,string>> pa){
 }
 
 void db::save_table(){
-	this->nts = fopen("nt.sql","w");
+	ofstream tfile(this->Nload_table);
 	for(unsigned i=0; i<this->table_name.size(); i++){
-		load_tx(this->nts,this->table_name[i].query);
-		load_tx(this->nts,this->table_name[i].date);
-		load_tx(this->nts,to_string(this->table_name[i].tb1[0]->size()));
-		fprintf(this->nts,"%c",'\n');
+		tfile << this->table_name[i].query << "|" << this->table_name[i].date << "|" << to_string(this->table_name[i].tb1[0]->size()) << "|";
 	}
-	fclose(this->nts);
+	
+	ofstream ifile(this->Nload_index);
+	string _nam;
+	for(unsigned i=0; i<this->table_name.size(); i++){
+		for(unsigned j=0; j<this->table_name[i].c.size(); j++){
+			if(this->table_name[i].c[j].idx){
+				_nam = to_string(i)+"|"+to_string(j)+"|"+this->table_name[i].c[j].name_idx+"|";
+				ifile << _nam;
+			}
+		}
+	}
 }
 
 table* db::find_(string a){
@@ -172,12 +170,7 @@ void db::create_index(string a){
 	if(tbm!=NULL){
 		col = partial_partition(a,i,';');
 		pos = tbm->position(col);
-		if(pos>=0){
-			tbm->c[pos].ix = new rbtree<int, cmg<int>>();
-			tbm->c[pos].idx = true;
-			for(unsigned i=0; i<tbm->tb1[pos]->size(); i++)
-				tbm->c[pos].ix->insert(stoi(tbm->tb1[pos]->get(i)),i);
-		}
+		if(pos>=0)	tbm->c[pos].set_idx(tbm->name);
 		else	cout << "      error!! doesn't exist this column!!" << endl;
 	}
 	else	cout << "      error!! doesn't exist this table!!" << endl;
