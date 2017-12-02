@@ -4,6 +4,8 @@
 *.bin
 *.h.gch
 **/table/*
+**/index/*
 *.bin
 *.txt
 *.dat
+*.idx
