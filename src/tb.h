@@ -12,9 +12,10 @@ using namespace std;
 class cold{
 public:
 	int nc;
-	string name, type, name_idx;;
+	string name, type, name_idx;
 	bool idx, ins;
 	rbtree<int,cmg<int>> *ix;
+	unsigned block;
 	cold(int _c, string _name, string _type, bool _idx){
 		this->nc = _c;
 		this->name = _name;
@@ -22,6 +23,7 @@ public:
 		this->idx = _idx;
 		this->ins = false;
 		this->ix = NULL;
+		this->block = 1000000;
 	}
 	friend ostream& operator<< (ostream & out, const cold &c){
 		out << "[" << c.nc << "|" << c.name << "|" << c.type << "|" << c.idx << "]  ";
@@ -36,18 +38,28 @@ public:
    	void set_idx(string tname){
    		if(!this->idx){
    			this->idx = true;
-	   		this->name_idx = "index/"+tname+"_"+this->name+".bin";
+	   		this->name_idx = "index/"+tname+"_"+this->name+".idx";
 
 	   		ofstream file(this->name_idx, ios::out | ios::binary);		
 			file.seekp(0);
-			vector<int> v(1000,-1);
-			for(unsigned i=0; i<2; i++){
+			vector<int> v(this->block*10,-1);
+			for(unsigned i=0; i<20; i++){
 				file.write(reinterpret_cast<const char*>(&v[0]), v.size()*sizeof(int));
 			}
 
 			file.close();
 		}
 		else	cout << "      error! index in column " << this->name << " exist!" << endl;
+   	}
+
+   	vector<int> load_block(int dato){
+   		vector<int> tmp(this->block);
+   		int st = dato/this->block;
+   		ifstream rfile(this->name_idx, ios::in | ios::binary);
+	
+		rfile.seekg(sizeof(int)*st*this->block, ios::beg);
+		rfile.read(reinterpret_cast<char*>(&tmp[0]), this->block*sizeof(int));
+   		return tmp;
    	}
 };
 
@@ -92,10 +104,10 @@ public:
 			out << c.c[i].name << "\t";
 		out << endl;
 
-		for(unsigned i=0; i<c.tb1[0]->size()-1; i++){
+		for(int i=0; i<(int)(c.tb1[0]->size())-2; i++){
 			if(c.vd[i]==true){
 				cout << "    ";
-				for(unsigned j=0; j<c.tb1.size(); j++)
+				for(int j=0; j<c.tb1.size(); j++)
 					out << c.tb1[j]->get(i) << "\t";
 				out << endl;
 			}
