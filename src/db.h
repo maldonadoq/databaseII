@@ -23,6 +23,21 @@
 
 using namespace std;
 
+
+void update_index(string path,int id, int dat){
+	int a = id;
+	ofstream file(path, ios::in | ios::binary);
+	file.seekp(sizeof(int)*dat, ios::beg);
+	file.write((char*)&a,sizeof(int));
+	file.close();
+}
+
+template<class T>
+void print_vector(vector<T> &v){
+	for(unsigned i=0; i<v.size(); i++)	cout << v[i] << " ";
+	cout << endl;				
+}
+
 class db{
 private:
 	FILE *nt, *nts;			  // tables
@@ -168,9 +183,43 @@ void db::create_index(string a){
 	nam = partial_partition(a,i,'-');
 	tbm = this->find_(nam);
 	if(tbm!=NULL){
+		struct timeval ti, tf;
+    	double tiempo;
+
 		col = partial_partition(a,i,';');
 		pos = tbm->position(col);
-		if(pos>=0)	tbm->c[pos].set_idx(tbm->name);
+		if(pos>=0){
+			gettimeofday(&ti, NULL);
+			if(tbm->c[pos].type == "age"){						
+				
+				tbm->c[pos].idx = true;
+				tbm->c[pos].ix = new rbtree<int,cmg<int>>();
+
+				ifstream file(tbm->tb1[pos]->get_path(), ios::binary | ios::app);
+				int8_t b;
+				file.seekg(2*sizeof(int8_t), ios::beg);
+				for(unsigned i=2; i<tbm->tb1[pos]->size(); i++){
+					file.read((char*)(&b),sizeof(int8_t));
+					tbm->c[pos].ix->insert(b,i);
+				}
+				file.close();		
+			}
+			else{
+				tbm->c[pos].set_idx(tbm->name);
+				ofstream file(tbm->c[pos].name_idx, ios::in | ios::binary);
+				vector<pair<int,int>> dtmp = tbm->tb1[pos]->scan_index("200000000",tbm->vd,'<');
+				for(int i=0; i<dtmp.size(); i++){
+					file.seekp(sizeof(int)*dtmp[i].first, ios::beg);
+					file.write((char*)&dtmp[i].second,sizeof(int));
+				}
+				dtmp.clear();
+				file.close();
+			}
+
+			gettimeofday(&tf, NULL);
+	    	tiempo = (tf.tv_sec - ti.tv_sec)*1000 + (tf.tv_usec - ti.tv_usec)/1000;
+	    	printf("     >time create index: %.8lf s\n",tiempo/1000);
+		}
 		else	cout << "      error!! doesn't exist this column!!" << endl;
 	}
 	else	cout << "      error!! doesn't exist this table!!" << endl;
@@ -203,8 +252,13 @@ void db::insert_into(string a){
 
 		if(validate_column(bpos)){
 			for(j=0; j<bpos.size(); j++){
-				if(tbm->c[bpos[j]].idx)
-					tbm->c[bpos[j]].ix->insert(stoi(dat[j]), tbm->tb1[bpos[j]]->size());
+				if(tbm->c[bpos[j]].idx){
+					if(stoi(dat[j])>200000000)	dat[j] = to_string(0);
+
+					if(tbm->c[bpos[j]].type == "age")
+						tbm->c[bpos[j]].ix->insert(stoi(dat[j]), tbm->tb1[bpos[j]]->size());
+					else	update_index(tbm->c[bpos[j]].name_idx,tbm->tb1[bpos[j]]->size(), stoi(dat[j]));
+				}
 				tbm->tb1[bpos[j]]->set(dat[j]);
 				tbm->c[bpos[j]].ins = true;
 			}
@@ -267,10 +321,11 @@ void db::select_from(string a){
 		cout << endl;
 
 		vector<unsigned> np = tbm->tb1[k]->scan(par.second, tbm->vd, op);
+		gettimeofday(&tf, NULL);
+
 		for(unsigned w=0; w<np.size(); w++)
 			tbm->rows_data(np[w]);
 
-		gettimeofday(&tf, NULL);
 	    tiempo = (tf.tv_sec - ti.tv_sec)*1000 + (tf.tv_usec - ti.tv_usec)/1000;
 	    printf("\n     >time table-scan: %.8lf s\n",tiempo/1000);
 	    cout << "     >rows: " << np.size() << endl;
@@ -314,28 +369,47 @@ void db::select_from_index(string a){
 			return;
 		}
 
-		struct timeval ti, tf;
-    	double tiempo;
-		gettimeofday(&ti, NULL);
+		if(tbm->c[k].idx){
+			struct timeval ti, tf;
+	    	double tiempo;
+			gettimeofday(&ti, NULL);
 
-		cout << "    " << tbm->name << endl << "    ";
-		for(unsigned i=0; i<tbm->c.size(); i++)
-			cout << tbm->c[i].name << "\t";
-		cout << endl;
+			cout << "    " << tbm->name << endl << "    ";
+			for(unsigned i=0; i<tbm->c.size(); i++)
+				cout << tbm->c[i].name << "\t";
+			cout << endl;
 
-		unsigned nr=0;
-		rbnode<int> *x = tbm->c[k].ix->search(stoi(par.second));
-		if(x!=NULL){
-			nr = x->pointer.size();
-			for(unsigned i=0; i<nr; i++)
-				tbm->rows_data(x->pointer[i]);
+			vector<int> pointer;
+			rbnode<int> *x;
+
+			if(tbm->c[k].type == "age"){
+				x = tbm->c[k].ix->search(stoi(par.second));		
+				if(x!=NULL)	pointer = x->pointer;			
+			}
+			else{
+				int ds = stoi(par.second);
+				int itmp = ds/tbm->c[k].block;
+				pointer = tbm->c[k].load_block(ds);
+				rbtree<int,cmg<int>> *rbt = new rbtree<int,cmg<int>>();
+				for(unsigned q=0; q<pointer.size(); q++)
+					if(pointer[q]!=-1 and tbm->vd[pointer[q]])	rbt->insert((itmp*tbm->c[k].block)+q,pointer[q]);
+
+				pointer.clear();
+				x = rbt->search(ds);
+				if(x!=NULL)	pointer = x->pointer;	
+				//print_vector(pointer);
+			}
+			gettimeofday(&tf, NULL);
+
+
+			for(unsigned i=0; i<pointer.size(); i++)
+				tbm->rows_data(pointer[i]);
+
+		    tiempo = (tf.tv_sec - ti.tv_sec)*1000 + (tf.tv_usec - ti.tv_usec)/1000;
+		    printf("\n     >time red-black: %.8lf s\n",tiempo/1000);
+		    cout << "     >rows: " << pointer.size() << endl;
 		}
-		else	nr=0;
-
-		gettimeofday(&tf, NULL);
-	    tiempo = (tf.tv_sec - ti.tv_sec)*1000 + (tf.tv_usec - ti.tv_usec)/1000;
-	    printf("\n     >time red-black: %.8lf s\n",tiempo/1000);
-	    cout << "     >rows: " << nr << endl;
+		else	cout << "      error!! doesn't exist index in this column" << endl;
 	}
 	else	cout << "      error!! doesn't exist this table" << endl;
 }
@@ -425,11 +499,14 @@ void db::delete_from(string a){
 			return;
 		}
 
-		for(unsigned i=0; i<tbm->tb1[k]->size(); i++){
-			if(tbm->vd[i]==true and tbm->tb1[k]->opr(tbm->tb1[k]->get(i),par.second,op)){
-				tbm->vd[i] = false;
+		for(unsigned i=0; i<tbm->c.size(); i++){
+			if(tbm->c[i].ix!=NULL){
+				tbm->c[i].ix->remove(stoi(par.second));
 			}
 		}
+
+		vector<unsigned> rtmp = tbm->tb1[k]->scan(par.second, tbm->vd, op);
+		for(unsigned i=0; i<rtmp.size(); i++)	tbm->vd[rtmp[i]] = false;
 	}
 	else	cout << "      error!! doesn't exist this table" << endl;
 }
@@ -466,6 +543,18 @@ void db::drop_table(string a){
     	else	dh += ".bin";	strcpy(z,dh.c_str());	remove(z);
     	cout << "     +column: " << z <<endl;
     }
+
+    cout << "    remove index: " << nam << endl;
+    for(k=0; k<this->table_name[j].c.size(); k++){
+    	if(this->table_name[j].c[k].idx and this->table_name[j].c[k].type=="integer"){
+			dh = this->table_name[j].c[k].name_idx;
+			char z[dh.size()];
+			strcpy(z,dh.c_str());
+			remove(z);
+			cout << "     +column: " << z <<endl;
+		}
+    }
+
     this->table_name.erase(this->table_name.begin()+j);
 }
 
@@ -487,3 +576,23 @@ void db::random(string a){
 
 //>time table-scan: 14.65700000 s
 //>rows: 499214
+
+// 50M age index
+//>time red-black: 11.90300000 s
+//>rows: 499978
+
+// 50M age secuential
+//>time red-black: 24.48900000 s
+//>rows: 998949
+
+
+//>time table-scan: 2.25900000 s
+//>rows: 99994
+
+//>time red-black: 0.00000000 s
+//>rows: 99994
+
+//select| * from test where id = 999999;
+
+
+//74
