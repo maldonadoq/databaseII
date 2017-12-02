@@ -22,7 +22,9 @@ public:
 	virtual unsigned size() = 0;
 	virtual bool opr(string,string,char) = 0;
 	virtual void random(unsigned) = 0;
+	string get_path(){	return this->path;	}
 	virtual vector<unsigned> scan(string, vector<bool> &, char) = 0;
+	virtual vector<pair<int,int>> scan_index(string, vector<bool> &, char) = 0;
 	virtual ~Column(){	};
 };
 
@@ -37,7 +39,20 @@ public:
 		file.seekg(0, ios::beg);
 		for(unsigned i=0; i<this->nsize; i++){
 			file.read((char*)(&b),sizeof(int));
-			if(this->opr(to_string(b),a,op))	np.push_back(i);
+			if(v[i] and this->opr(to_string(b),a,op))	np.push_back(i);
+		}
+		file.close();
+		return np;
+	}
+
+	vector<pair<int,int>> scan_index(string a, vector<bool> &v, char op){
+		ifstream file(this->path, ios::binary | ios::app);
+		int b;
+		vector<pair<int,int>> np;
+		file.seekg(0, ios::beg);
+		for(unsigned i=0; i<this->nsize; i++){
+			file.read((char*)(&b),sizeof(int));
+			if(v[i] and this->opr(to_string(b),a,op))	np.push_back(pair<int,int>(b,i));
 		}
 		file.close();
 		return np;
@@ -107,9 +122,14 @@ public:
 		file.seekg(0, ios::beg);
 		for(unsigned i=0; i<this->nsize; i++){
 			file.read((char*)(&b),sizeof(double));
-			if(this->opr(to_string(b),a,op))	np.push_back(i);
+			if(v[i] and this->opr(to_string(b),a,op))	np.push_back(i);
 		}
 		file.close();
+		return np;
+	}
+
+	vector<pair<int,int>> scan_index(string a, vector<bool> &v, char op){
+		vector<pair<int,int>> np;
 		return np;
 	}
 
@@ -176,11 +196,15 @@ public:
 		file.seekg(0, ios::beg);
 		for(unsigned i=0; i<this->nsize; i++){
 			file.read((char*)(&b),sizeof(char));
-			if(b == at)	np.push_back(i);
 			bt = ""+b;
-			if(this->opr(bt,a,op))	np.push_back(i);
+			if(v[i] and this->opr(bt,a,op))	np.push_back(i);
 		}
 		file.close();
+		return np;
+	}
+
+	vector<pair<int,int>> scan_index(string a, vector<bool> &v, char op){
+		vector<pair<int,int>> np;
 		return np;
 	}
 
@@ -290,9 +314,14 @@ public:
 		file.seekg(0, ios::beg);
 		for(unsigned i=0; i<this->nsize; i++){
 			file.read((char*)(&b),sizeof(time_t));
-			if(this->opr(time_string(b),a,op))	np.push_back(i);
+			if(v[i] and this->opr(time_string(b),a,op))	np.push_back(i);
 		}
 		file.close();
+		return np;
+	}
+
+	vector<pair<int,int>> scan_index(string a, vector<bool> &v, char op){
+		vector<pair<int,int>> np;
 		return np;
 	}
 
@@ -358,12 +387,17 @@ public:
 		file.seekg(0, ios::beg);
 		for(unsigned i=0; i<this->nsize; i++){
 			file.read((char*)(&b),sizeof(int8_t));
-			if(this->opr(to_string(b),a,op))	np.push_back(i);
+			if(v[i] and this->opr(to_string(b),a,op))	np.push_back(i);
 		}
 		file.close();
 		return np;
 	}
 
+	vector<pair<int,int>> scan_index(string a, vector<bool> &v, char op){
+		vector<pair<int,int>> np;
+		return np;
+	}
+	
 	void set(string q){
 		int8_t a = stoi(q);
 		ofstream file(this->path, ios::in | ios::binary);
