@@ -190,7 +190,7 @@ void db::create_index(string a){
 		pos = tbm->position(col);
 		if(pos>=0){
 			gettimeofday(&ti, NULL);
-			if(tbm->c[pos].type == "age"){						
+			if(tbm->c[pos].type == "age"){
 				
 				tbm->c[pos].idx = true;
 				tbm->c[pos].ix = new rbtree<int,cmg<int>>();
@@ -227,7 +227,7 @@ void db::create_index(string a){
 
 void db::insert_into(string a){
 	if(a.size()<=11){	cout << "      error!!!" << endl;	}
-	string tm = "", nam;
+	string tm = "", nam, typ;
 	vector<string> val, dat;
 	vector<int> bpos;		//bool position, all column
 	table * tbm;			//table
@@ -255,7 +255,8 @@ void db::insert_into(string a){
 				if(tbm->c[bpos[j]].idx){
 					if(stoi(dat[j])>200000000)	dat[j] = to_string(0);
 
-					if(tbm->c[bpos[j]].type == "age")
+					typ = tbm->c[bpos[j]].type;
+					if(typ == "age" or typ == "integer")
 						tbm->c[bpos[j]].ix->insert(stoi(dat[j]), tbm->tb1[bpos[j]]->size());
 					else	update_index(tbm->c[bpos[j]].name_idx,tbm->tb1[bpos[j]]->size(), stoi(dat[j]));
 				}
@@ -354,7 +355,7 @@ void db::select_from_index(string a){
 	if(nam == fr and tbm != NULL)	cout << *tbm << endl;
 	else if(tbm != NULL){
 		if(sw != partial_partition(a,i,' ')){
-			cout << "      error!! query like this! \"select * from  table_name where col_name = id;\"" << endl;		
+			cout << "      error!! query like this! \"select| * from  table_name where col_name = id;\"" << endl;		
 			return;
 		}
 		cond = partial_partition(a,i,';');

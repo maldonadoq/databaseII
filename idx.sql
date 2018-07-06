@@ -1,1 +1,1 @@
-0|0|index/estudiante_x_id.idx|1|0|index/estudiante_xx_id.idx|2|0|index/estudiante_xxx_id.idx|3|0|index/test_id.idx|
+0|0|index/alumno_id.idx|1|0|index/alumno1_id.idx|

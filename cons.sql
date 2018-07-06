@@ -1,4 +1,4 @@
-/*with tab as(
+with tab as(
 	select
 		alumnos.id_alumno as alumno_id,
 		alumnos.name as alumno_na,
@@ -18,7 +18,7 @@ select
 	end as "Status"
 from tab
 left join matricula as mat on mat.id_alumno = tab.alumno_id and mat.id_curso = tab.curso_id
-order by tab.alumno_id;*/
+order by tab.alumno_id;
 
 --select *from tmp;
 
@@ -53,7 +53,7 @@ select * from alumnos;
 select * from curso;
 
 select * from tab;
-select * from tmp;*/
+select * from tmp;
 
 create temp table tab as(
 	select
@@ -69,7 +69,7 @@ with tab1 as(
 	select 
 		*
 	from aux, fecha
-)
+)}
 select
 	tab1.producto,
 	tab1.fecha,
@@ -77,4 +77,4 @@ select
 	coalesce(tab.monto,'0')
 from tab1
 full outer join tab on tab.fecha = tab1.fecha and tab.producto = tab1.producto
-order by tab1.producto;
+order by tab1.producto;*/

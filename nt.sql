@@ -1,1 +1,1 @@
-create table estudiante_x(id integer, money double, age age);|Thu Nov 12 10:05:45 2017 |10000002|create table estudiante_xx(id integer, money double, age age);|Thu Nov 13 10:05:45 2017 |50000003|create table estudiante_xxx(id integer, money double, age age);|Thu Nov 14 10:05:45 2017 |100000001|create table test(id integer, age age);|Sat Dec  2 06:16:23 2017 |10000108|
+create table alumno(id integer, age age, money double);|Thu Jul  5 18:53:58 2018 |110000014|create table alumno1(id integer, age age, money double);|Thu Jul  5 19:05:54 2018 |100000003|

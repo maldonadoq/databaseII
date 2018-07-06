@@ -23,7 +23,7 @@ public:
 		this->idx = _idx;
 		this->ins = false;
 		this->ix = NULL;
-		this->block = 1000000;
+		this->block = 10000;
 	}
 	friend ostream& operator<< (ostream & out, const cold &c){
 		out << "[" << c.nc << "|" << c.name << "|" << c.type << "|" << c.idx << "]  ";
